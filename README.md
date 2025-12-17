@@ -1,2 +1,0 @@
-# techfiesta
-CampusConnect
