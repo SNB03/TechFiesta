@@ -1,21 +1,38 @@
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path'); // Import path
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
+// Middleware
 app.use(express.json());
 app.use(cors());
-
-// Serve the 'uploads' folder statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ... (Rest of your DB connection and routes)
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/opportunities', require('./routes/opportunities'));
+// --- DATABASE CONNECTION (DEBUGGED) ---
+const connectDB = async () => {
+    try {
+        console.log("⏳ Attempting to connect to MongoDB...");
+        // 1. Force wait for connection
+        await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 5000 // Fail fast (5 sec) if no server found
+        });
+        console.log('✅ MongoDB Connected Successfully');
+    } catch (err) {
+        console.error('❌ MongoDB Connection Error:', err.message);
+        console.error('💡 TIP: Is your MongoDB server running? Run "mongod" in a new terminal.');
+        process.exit(1); // Stop server if DB fails
+    }
+};
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// Connect DB first, THEN start server
+connectDB().then(() => {
+    // Routes
+    app.use('/api/auth', require('./routes/auth'));
+    app.use('/api/opportunities', require('./routes/opportunities'));
+
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+});

@@ -1,38 +1,44 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-const Dashboard = () => {
-  const [opportunities, setOpportunities] = useState([]);
+// Import Sub-Dashboards
+import StudentDashboard from './dashboards/StudentDashboard';
+import FacultyDashboard from './dashboards/FacultyDashboard';
+import OwnerDashboard from './dashboards/OwnerDashboard';
+
+export default function Dashboard() {
+  const [role, setRole] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchOpps = async () => {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/opportunities', {
-        headers: { 'x-auth-token': token }
-      });
-      setOpportunities(res.data);
-    };
-    fetchOpps();
-  }, []);
+    // 1. Get Role from Storage
+    const storedRole = localStorage.getItem('role');
+    const token = localStorage.getItem('token');
+
+    // 2. Security Check
+    if (!token) {
+      navigate('/login');
+    } else {
+      setRole(storedRole);
+    }
+  }, [navigate]);
+
+  // 3. Render based on Role
+  if (role === 'owner') {
+    return <OwnerDashboard />;
+  } 
+  
+  if (role === 'faculty') {
+    return <FacultyDashboard />;
+  }
+
+  if (role === 'student') {
+    return <StudentDashboard />;
+  }
 
   return (
-    <div>
-      <h1>Opportunities Feed</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-        {opportunities.map((opp) => (
-          <div key={opp._id} style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '8px' }}>
-            <h3>{opp.title}</h3>
-            <p><strong>{opp.companyOrFaculty}</strong> | <span style={{color: 'blue'}}>{opp.type}</span></p>
-            <p>{opp.description}</p>
-            <p><strong>Skills:</strong> {opp.skillsRequired.join(', ')}</p>
-            <button style={{ background: 'green', color: 'white', padding: '8px', border: 'none', cursor: 'pointer' }}>
-                Apply Now
-            </button>
-          </div>
-        ))}
-      </div>
+    <div className="container" style={{textAlign:'center', paddingTop:'50px'}}>
+      <h2>Loading...</h2>
     </div>
   );
-};
-
-export default Dashboard;
+}
