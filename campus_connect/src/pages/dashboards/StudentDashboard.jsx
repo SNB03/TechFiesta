@@ -58,7 +58,11 @@ const Placeholder = ({ tab }) => (
 
 const styles = {
   container: { display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: '"Inter", sans-serif' },
-  mainContent: { flex: 1, marginLeft: '260px', padding: '30px' },
+  mainContent: { flex: 1, 
+    marginLeft: '260px', 
+    padding: '24px', // Reduced padding from 30px to 24px to use more edge space
+    background: '#f8fafc',
+    minHeight: '100vh'},
 };
 
 export default StudentDashboard;

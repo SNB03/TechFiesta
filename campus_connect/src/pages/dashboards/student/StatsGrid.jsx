@@ -15,7 +15,6 @@ const StatsGrid = () => {
         <div key={i} style={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
             <div style={{ ...styles.iconBox, background: stat.bg }}>{stat.icon}</div>
-            {i === 2 && <span style={styles.badge}>New</span>}
           </div>
           <div>
              <h3 style={styles.value}>{stat.value}</h3>
@@ -29,13 +28,28 @@ const StatsGrid = () => {
 };
 
 const styles = {
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' },
-  card: { background: 'white', padding: '24px', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
-  iconBox: { width: '45px', height: '45px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  value: { fontSize: '2rem', fontWeight: '800', color: '#0f172a', margin: '10px 0 0 0', lineHeight: '1.1' },
+  grid: { 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', // Wider minimums
+    gap: '20px', 
+    marginBottom: '20px',
+    width: '100%'
+  },
+  card: { 
+    background: 'white', 
+    padding: '20px 24px', 
+    borderRadius: '12px', 
+    border: '1px solid #e2e8f0', 
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)', // Settle shadow
+    display: 'flex', 
+    flexDirection: 'column', 
+    justifyContent: 'space-between',
+    minHeight: '140px'
+  },
+  iconBox: { width: '42px', height: '42px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  value: { fontSize: '2.2rem', fontWeight: '700', color: '#0f172a', margin: '15px 0 5px 0', lineHeight: '1' },
   label: { fontSize: '0.9rem', color: '#64748b', fontWeight: '500' },
-  trend: { fontSize: '0.75rem', color: '#94a3b8', marginTop: '10px', fontWeight: '500' },
-  badge: { fontSize: '0.65rem', background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }
+  trend: { fontSize: '0.75rem', color: '#94a3b8', marginTop: 'auto', paddingTop: '10px', fontWeight: '500' },
 };
 
 export default StatsGrid;
