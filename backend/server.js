@@ -10,9 +10,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/opportunities', require('./routes/opportunities'));
 //app.use('/uploads', express.static('uploads'));
-
-
+app.use('/api/applications', require('./routes/applications'));
+app.use('/api/ai-resume', require('./routes/ai-resume'));
+app.use('/api/ai-interview', require('./routes/ai-interview'));
+app.use('/api/ai-chatbot', require('./routes/ai-chatbot'));
 // --- DATABASE CONNECTION (DEBUGGED) ---
 const connectDB = async () => {
     try {

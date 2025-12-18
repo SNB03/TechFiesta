@@ -1,27 +1,29 @@
 const mongoose = require('mongoose');
 
 const ApplicationSchema = new mongoose.Schema({
-  jobId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Opportunity', 
-    required: true 
-  },
-  studentId: { 
+  student: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
     required: true 
   },
-  studentName: String,
-  studentEmail: String,
-  studentBranch: String,
-  studentCGPA: String,
-  resumeLink: String, // Optional URL to resume
+  opportunity: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Opportunity', 
+    required: true 
+  },
+  resumeLink: { 
+    type: String, 
+    required: true // 👈 New Field: Resume is mandatory
+  },
   status: { 
     type: String, 
-    enum: ['Pending', 'Shortlisted', 'Rejected', 'Accepted'], 
-    default: 'Pending' 
+    enum: ['Applied', 'Shortlisted', 'Rejected', 'Accepted'], 
+    default: 'Applied' 
   },
   appliedAt: { type: Date, default: Date.now }
 });
+
+// Prevent duplicate applications
+ApplicationSchema.index({ student: 1, opportunity: 1 }, { unique: true });
 
 module.exports = mongoose.model('Application', ApplicationSchema);

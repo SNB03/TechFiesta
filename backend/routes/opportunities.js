@@ -158,4 +158,59 @@ router.get('/student/my-applications', auth, async (req, res) => {
     }
 });
 
+
+// 📌 CREATE OPPORTUNITY (Faculty/Admin Only)
+router.post('/create', auth, async (req, res) => {
+    try {
+        // Optional: Check if user is faculty
+        if (req.user.role !== 'faculty' && req.user.role !== 'owner') {
+            return res.status(403).json({ msg: "Access Denied. Only Faculty can post." });
+        }
+
+        const { title, type, company, location, stipend, description, deadline, applyLink } = req.body;
+
+        const newOpp = new Opportunity({
+            title, type, company, location, stipend, description, deadline, applyLink,
+            postedBy: req.user.id
+        });
+
+        await newOpp.save();
+        res.json(newOpp);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// 📌 GET ALL OPPORTUNITIES (For Students)
+router.get('/', auth, async (req, res) => {
+    try {
+        // Sort by newest first
+        const opportunities = await Opportunity.find().sort({ createdAt: -1 });
+        res.json(opportunities);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// 📌 DELETE OPPORTUNITY
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const opp = await Opportunity.findById(req.params.id);
+        if(!opp) return res.status(404).json({ msg: "Not Found" });
+
+        // Check ownership
+        if(opp.postedBy.toString() !== req.user.id) {
+            return res.status(401).json({ msg: "Not Authorized" });
+        }
+
+        await opp.deleteOne();
+        res.json({ msg: "Opportunity Removed" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
 module.exports = router;
