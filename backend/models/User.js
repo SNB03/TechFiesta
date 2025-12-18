@@ -1,65 +1,28 @@
-// const mongoose = require('mongoose');
-
-// const UserSchema = new mongoose.Schema({
-//   name: { type: String, required: true },
-//   email: { type: String, required: true, unique: true },
-//   password: { type: String, required: true },
-//   role: { 
-//     type: String, 
-//     enum: ['student', 'faculty', 'owner'], 
-//     default: 'student' 
-//   },
-  
-//   // Faculty Details
-//   state: { type: String, default: '' },
-//   district: { type: String, default: '' },
-//   taluka: { type: String, default: '' }, // ✅ Added Taluka
-//   collegeName: { type: String, default: '' },
-  
-//   // Unique Admin ID
-//   collegeCode: { type: String, sparse: true }, 
-
-//   // Security
-//   verificationDoc: { type: String, default: '' },
-//   isVerified: { type: Boolean, default: false },
-//   otp: String,
-//   otpExpires: Date,
-
-//   // Student Details
-//   skills: [String],
-//   resumeLink: String
-// }, { timestamps: true });
-
-// module.exports = mongoose.model('User', UserSchema);
-
-
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { 
-    type: String, 
-    enum: ['student', 'faculty', 'owner'], 
-    default: 'student' 
-  },
+  role: { type: String, enum: ['student', 'faculty', 'owner'], default: 'student' },
   
-  // Faculty Details
-  state: { type: String, default: '' },
-  district: { type: String, default: '' },
-  taluka: { type: String, default: '' },
+  // existing fields...
   collegeName: { type: String, default: '' },
-  
-  // The Code: Generated for Faculty, Entered by Students
-  collegeCode: { type: String, sparse: true }, 
-
-  // Student Details (New Fields)
+  collegeCode: { type: String, sparse: true },
   branch: { type: String, default: '' },
   year: { type: String, default: '' },
   cgpa: { type: String, default: '' },
   
-  // Security
+  // --- NEW PROFILE FIELDS ---
+  about: { type: String, default: '' },
+  skills: { type: [String], default: [] },
+  linkedin: { type: String, default: '' },
+  github: { type: String, default: '' },
+  resumeLink: { type: String, default: '' },
+  profilePic: { type: String, default: '' }, // URL to image
+  coverPic: { type: String, default: '' }, // 👈 Add this new field
+  
+  // security...
   verificationDoc: { type: String, default: '' },
   isVerified: { type: Boolean, default: false },
   otp: String,

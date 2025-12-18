@@ -10,6 +10,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+//app.use('/uploads', express.static('uploads'));
+
 
 // --- DATABASE CONNECTION (DEBUGGED) ---
 const connectDB = async () => {
@@ -32,7 +34,10 @@ connectDB().then(() => {
     // Routes
     app.use('/api/auth', require('./routes/auth'));
     app.use('/api/opportunities', require('./routes/opportunities'));
+    app.use('/api/notifications', require('./routes/notifications'));
+  
 
     const PORT = process.env.PORT || 5000;
+   // app.use('/uploads', express.static('uploads'));
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 });

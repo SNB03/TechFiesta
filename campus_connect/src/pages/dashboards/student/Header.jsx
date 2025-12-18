@@ -1,14 +1,80 @@
-import React, { useState } from 'react';
-import { Bell, Search } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell } from 'lucide-react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
-const Header = ({ activeTab, userName }) => {
+const Header = ({ activeTab, userName, setActiveTab }) => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const dropdownRef = useRef(null);
 
-  const notifications = [
-    { id: 1, text: "Application Shortlisted", sub: "AI Traffic System • Smart City Lab", time: "2h", unread: true },
-    { id: 2, text: "New Opportunity", sub: "Cyber Security Analyst @ TechCorp", time: "5h", unread: true },
-    { id: 3, text: "Profile Reminder", sub: "Please update your resume", time: "1d", unread: false }
-  ];
+  // --- 1. FETCH NOTIFICATIONS ---
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://127.0.0.1:5000/api/notifications', {
+        headers: { 'x-auth-token': token }
+      });
+      setNotifications(res.data);
+      setUnreadCount(res.data.filter(n => !n.isRead).length);
+    } catch (err) {
+      console.error("Failed to fetch notifications");
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // Optional: Poll every 30 seconds for new alerts
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // --- 2. MARK ALL READ ---
+  const markAllRead = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        await axios.put('http://127.0.0.1:5000/api/notifications/mark-read', {}, {
+            headers: { 'x-auth-token': token }
+        });
+        // Update UI locally
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+        toast.success("All marked as read");
+    } catch (err) {
+        console.error("Failed to mark read");
+    }
+  };
+
+  // --- 3. HANDLE CLICK ---
+  const handleNotificationClick = (notif) => {
+      // 1. Navigate if link exists
+      if (notif.link && setActiveTab) {
+          setActiveTab(notif.link);
+      }
+      setShowNotifications(false);
+  };
+
+  // Close dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Time formatter (e.g. "2h", "5m")
+  const formatTime = (dateString) => {
+      const diff = Date.now() - new Date(dateString).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 60) return `${mins}m`;
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return `${hours}h`;
+      return `${Math.floor(hours / 24)}d`;
+  };
 
   return (
     <header style={styles.header}>
@@ -19,7 +85,7 @@ const Header = ({ activeTab, userName }) => {
       </div>
 
       {/* Right Side Actions */}
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', position: 'relative' }}>
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', position: 'relative' }} ref={dropdownRef}>
         
         {/* Notification Bell */}
         <div style={{ position: 'relative' }}>
@@ -28,31 +94,44 @@ const Header = ({ activeTab, userName }) => {
             onClick={() => setShowNotifications(!showNotifications)}
           >
             <Bell size={20} color={showNotifications ? '#4f46e5' : '#64748b'} />
-            <div style={styles.redDot}></div>
+            {unreadCount > 0 && <div style={styles.redDot}></div>}
           </div>
 
-          {/* Improved Dropdown UI */}
+          {/* Dropdown UI */}
           {showNotifications && (
             <div style={styles.dropdown}>
               <div style={styles.dropdownHeader}>
-                <span style={{fontWeight:'bold'}}>Notifications</span>
-                <span style={{fontSize:'0.75rem', color:'#4f46e5', cursor:'pointer'}}>Mark all read</span>
+                <span style={{fontWeight:'700', fontSize:'0.95rem'}}>Notifications</span>
+                <span onClick={markAllRead} style={styles.markReadBtn}>Mark all read</span>
               </div>
               
               <div style={styles.list}>
-                {notifications.map(n => (
-                  <div key={n.id} style={{...styles.notifItem, background: n.unread ? '#f8fafc' : 'white'}}>
-                    <div style={{width:'8px', height:'8px', borderRadius:'50%', background: n.unread ? '#3b82f6' : 'transparent', marginTop:'5px'}}></div>
-                    <div style={{flex:1}}>
-                        <p style={{margin:0, fontSize:'0.85rem', fontWeight: n.unread ? '600' : '400', color:'#1e293b'}}>{n.text}</p>
-                        <p style={{margin:'2px 0 0 0', fontSize:'0.75rem', color:'#64748b'}}>{n.sub}</p>
-                    </div>
-                    <span style={{fontSize:'0.7rem', color:'#94a3b8'}}>{n.time}</span>
-                  </div>
-                ))}
+                {notifications.length === 0 ? (
+                    <div style={{padding:'20px', textAlign:'center', color:'#94a3b8', fontSize:'0.85rem'}}>No new notifications</div>
+                ) : (
+                    notifications.map(n => (
+                      <div key={n._id} onClick={() => handleNotificationClick(n)} style={{...styles.notifItem, background: n.isRead ? 'white' : '#f8fafc'}}>
+                        {/* Blue Dot for Unread */}
+                        <div style={{width:'8px', height:'8px', borderRadius:'50%', background: n.isRead ? 'transparent' : '#3b82f6', marginTop:'6px', flexShrink:0}}></div>
+                        
+                        <div style={{flex:1}}>
+                            <p style={{margin:0, fontSize:'0.85rem', fontWeight: n.isRead ? '400' : '600', color:'#1e293b'}}>
+                                {n.title}
+                            </p>
+                            <p style={{margin:'2px 0 0 0', fontSize:'0.75rem', color:'#64748b'}}>
+                                {n.message}
+                            </p>
+                        </div>
+                        <span style={{fontSize:'0.7rem', color:'#94a3b8'}}>{formatTime(n.createdAt)}</span>
+                      </div>
+                    ))
+                )}
               </div>
               
-              <div style={styles.dropdownFooter}>View All Activity</div>
+              <div style={styles.dropdownFooter}  onClick={() => {
+    setActiveTab('Announcements'); // 👈 Switch tab
+    setShowNotifications(false);   // Close dropdown
+  }}>View All Activity</div>
             </div>
           )}
         </div>
@@ -63,7 +142,7 @@ const Header = ({ activeTab, userName }) => {
 
 const styles = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
-  pageTitle: { fontSize: '1.8rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '5px' },
+  pageTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#0f172a', marginBottom: '5px' },
   subTitle: { color: '#64748b', margin: 0 },
   iconBtn: { 
     width: '44px', height: '44px', borderRadius: '50%', background: 'white', 
@@ -74,23 +153,24 @@ const styles = {
   
   // Dropdown Styles
   dropdown: {
-    position: 'absolute', top: '55px', right: '0', width: '320px', 
-    background: 'white', borderRadius: '16px', 
+    position: 'absolute', top: '55px', right: '0', width: '340px', 
+    background: 'white', borderRadius: '12px', 
     boxShadow: '0 10px 40px -10px rgba(0,0,0,0.15)', 
     border: '1px solid #f1f5f9', zIndex: 200, overflow:'hidden'
   },
   dropdownHeader: {
     padding: '15px 20px', borderBottom: '1px solid #f1f5f9', 
-    display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:'0.9rem', color:'#0f172a'
+    display:'flex', justifyContent:'space-between', alignItems:'center', color:'#0f172a'
   },
-  list: { maxHeight: '300px', overflowY: 'auto' },
+  markReadBtn: { fontSize:'0.75rem', color:'#4f46e5', cursor:'pointer', fontWeight:'600' },
+  list: { maxHeight: '320px', overflowY: 'auto' },
   notifItem: {
-    padding: '12px 20px', display: 'flex', gap: '10px', alignItems: 'flex-start',
-    borderBottom: '1px solid #f8fafc', cursor: 'pointer', transition:'background 0.2s'
+    padding: '12px 20px', display: 'flex', gap: '12px', alignItems: 'flex-start',
+    borderBottom: '1px solid #f1f5f9', cursor: 'pointer', transition:'background 0.2s'
   },
   dropdownFooter: {
-    padding: '12px', textAlign:'center', fontSize:'0.8rem', color:'#4f46e5', fontWeight:'600',
-    background:'#f8fafc', cursor:'pointer'
+    padding: '12px', textAlign:'center', fontSize:'0.8rem', color:'#4f46e5', fontWeight:'700',
+    background:'#f8fafc', cursor:'pointer', borderTop:'1px solid #f1f5f9'
   }
 };
 

@@ -6,6 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
+const auth = require('../middleware/authMiddleware');
 
 // --- 1. SETUP UPLOADS ---
 const uploadDir = path.join(__dirname, '../uploads'); 
@@ -225,4 +226,41 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// 📌 GET CURRENT USER PROFILE
+router.get('/me', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        res.json(user);
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
+});
+
+// 📌 UPDATE PROFILE
+router.put('/profile', auth, async (req, res) => {
+    try {
+        const { about, skills, linkedin, github, resumeLink, branch, year, cgpa } = req.body;
+        
+        // Find user
+        let user = await User.findById(req.user.id);
+        if(!user) return res.status(404).json({ msg: "User not found" });
+
+        // Update fields
+        if(about) user.about = about;
+        if(skills) user.skills = skills.split(',').map(s => s.trim()); // Expect comma string
+        if(linkedin) user.linkedin = linkedin;
+        if(github) user.github = github;
+        if(resumeLink) user.resumeLink = resumeLink;
+        if(branch) user.branch = branch;
+        if(year) user.year = year;
+        if(cgpa) user.cgpa = cgpa;
+
+        await user.save();
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
 module.exports = router;
+

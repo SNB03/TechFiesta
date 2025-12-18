@@ -143,4 +143,19 @@ router.delete('/:id', auth, async (req, res) => {
     }
 });
 
+// 📌 8. GET MY APPLICATIONS (For Student Dashboard)
+router.get('/student/my-applications', auth, async (req, res) => {
+    try {
+        // Find apps where studentId matches the logged-in user
+        const apps = await Application.find({ studentId: req.user.id })
+            .populate('jobId', 'title company type') // Get job details
+            .sort({ appliedAt: -1 }); // Newest first
+
+        res.json(apps);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
 module.exports = router;
